@@ -1,8 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
-# ⚠️ THE MOST ROBUST FIX: We only import the main package.
-# The Client class is accessed via genai.Client() below.
-# Delete the problematic line: from google.generativeai.client import Client 
+# No explicit Client import here. The Client is accessed via genai.Client() below.
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -22,10 +20,10 @@ except Exception as e:
 
 # 2. Instantiate the Client using the simple, modern syntax
 try:
-    # Use genai.Client() which is the intended way to instantiate the client object
+    # Use genai.Client(), which is the standard way after configuring the API key
     client = genai.Client() 
 except Exception as e:
-    # This catches initialization errors, which should be rare with the correct import
+    # This should now work as the problematic import is gone
     st.error(f"Failed to initialize Gemini Client. Details: {e}")
     st.stop()
 
