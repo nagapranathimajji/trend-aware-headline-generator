@@ -159,7 +159,7 @@ if st.button("✨ Generate Headlines"):
             try:
                 # ⚠️ THE CALL THAT WORKS ON VIRTUALLY ALL SDK VERSIONS ⚠️
                 # Since we configured the key, we use the functional access to the models service
-                response = genai.models.generate_content(
+                response = genai.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
                         PROMPT, 
