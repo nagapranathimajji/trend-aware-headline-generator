@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -8,8 +8,8 @@ st.set_page_config(
     layout="centered",
 )
 
-# ----------------- OPENAI CLIENT -----------------
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# ----------------- GEMINI CLIENT -----------------
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])  # Store your key in Streamlit secrets
 
 # ----------------- CUSTOM CSS -----------------
 st.markdown("""
@@ -30,17 +30,18 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                # Gemini text generation
+                response = genai.chat.create(
+                    model="gemini-1.5-t",  # Latest Gemini chat model
                     messages=[
-                        {"role": "system", "content": "You are a trend-aware headline generator."},
-                        {"role": "user", "content": f"Generate 5 trendy, engaging, SEO-friendly headlines about: {keywords}. Keep them short and catchy."}
+                        {"author": "user", "content": f"Generate 5 trendy, engaging, SEO-friendly headlines about: {keywords}. Keep them short and catchy."}
                     ],
-                    max_tokens=150,
-                    temperature=0.7
+                    temperature=0.7,
+                    max_output_tokens=150
                 )
 
-                text = response.choices[0].message.content
+                # Extract generated text
+                text = response.choices[0].content[0].text
                 headlines = [hl.strip("- ").strip() for hl in text.split("\n") if hl.strip()]
 
                 # Display headlines
