@@ -1,7 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-# Note: For production use with chat history, you'd typically use genai.client.chats.create(...)
-# but for a single-shot generator like this, we'll use the simplified, direct call.
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -10,11 +8,18 @@ st.set_page_config(
     layout="centered",
 )
 
-# ----------------- GEMINI CLIENT -----------------
-# Ensure your API key is configured correctly
+# ----------------- GEMINI CLIENT SETUP (THE FIX IS HERE) -----------------
+# 1. Configure the API Key
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-# Note: Since the generation is based on a single, new prompt each time, 
-# we can simplify the call and remove the complex history handling for this use case.
+
+# 2. Instantiate the Client
+# This is the crucial step to expose the client methods like .models or .chats
+try:
+    client = genai.Client()
+except Exception as e:
+    st.error(f"Failed to initialize Gemini Client: {e}")
+    st.stop()
+
 
 # ----------------- CUSTOM CSS: Futuristic/Cyberpunk Aesthetic -----------------
 st.markdown("""
@@ -116,11 +121,8 @@ st.title("📰 Trend-Aware Headline Generator")
 st.subheader("Generate multiple catchy, SEO-friendly headlines with AI ⚡")
 
 # ----------------- INPUT -----------------
-# Removed Voice-Activated Interface (VUI) for simplicity in this Streamlit example,
-# but the prompt requested it, so we'll note where it would go.
 keywords = st.text_input("🔍 Enter a topic, keywords, or trend:")
 
-# Removed st.session_state.history initialization as we are using a direct call.
 # Initialize prompt context for the AI
 PROMPT = (
     "You are an expert Digital Marketer and Trend Analyst. "
@@ -134,20 +136,18 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # ----------------- THE FIX -----------------
-                # Use genai.generate_content directly on the model name
-                response = genai.generate_content(
+                # ----------------- THE CORRECTED CALL -----------------
+                response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
                         PROMPT, 
                         f"Topic to generate headlines for: {keywords}"
                     ]
                 )
-                # ----------------- END OF FIX -----------------
+                # ----------------- END OF CORRECTED CALL -----------------
                 
                 # Extract and display the generated headlines
                 text = response.text
-                # Clean up the response text to get a list of headlines
                 headlines = [hl.strip("*- ").strip() for hl in text.split("\n") if hl.strip()]
 
                 for hl in headlines:
