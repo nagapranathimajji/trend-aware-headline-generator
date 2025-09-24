@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 # No explicit Client import here. The Client is accessed via genai.Client() below.
-
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
     page_title="📰 Trend-Aware Headline Generator",
