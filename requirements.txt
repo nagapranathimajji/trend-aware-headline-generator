@@ -1,2 +1,2 @@
 streamlit
-google-genai
+google-genai>=0.11.0
