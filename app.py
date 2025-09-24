@@ -87,20 +87,26 @@ if st.button("✨ Generate Headlines"):
         with st.spinner("Scanning social trends... ⚡"):
             try:
                 openai.api_key = st.secrets["OPENAI_API_KEY"]
-                response = openai.Completion.create(
-                    engine="text-davinci-003",
-                    prompt=f"Generate 5 trendy, engaging, SEO-friendly headlines about: {keywords}. Keep them short and catchy.",
-                    max_tokens=60,
+                
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are a trend-aware headline generator."},
+                        {"role": "user", "content": f"Generate 5 trendy, engaging, SEO-friendly headlines about: {keywords}. Keep them short and catchy."}
+                    ],
+                    max_tokens=150,
                     temperature=0.7
                 )
-                headlines = response.choices[0].text.strip().split("\n")
-                headlines = [hl.strip("- ").strip() for hl in headlines if hl.strip()]
-                
+
+                # Extract generated text
+                text = response.choices[0].message['content']
+                headlines = [hl.strip("- ").strip() for hl in text.split("\n") if hl.strip()]
+
                 # Display headlines with copy buttons
-                for i, hl in enumerate(headlines, 1):
+                for hl in headlines:
                     st.markdown(f"<div class='result-box'><h2>{hl}</h2></div>", unsafe_allow_html=True)
                     st.markdown(f"<button class='copy-btn' onclick='navigator.clipboard.writeText(\"{hl}\")'>📋 Copy Headline</button>", unsafe_allow_html=True)
-            
+
             except Exception as e:
                 st.error(f"❌ Something went wrong: {e}")
     else:
