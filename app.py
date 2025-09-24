@@ -1,7 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
-# ⚠️ FINAL FIX: Import Client explicitly from the client submodule
-from google.generativeai.client import Client 
+# ⚠️ THE MOST ROBUST FIX: We only import the main package.
+# The Client class is accessed via genai.Client() below.
+# Delete the problematic line: from google.generativeai.client import Client 
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -12,22 +13,22 @@ st.set_page_config(
 
 # ----------------- GEMINI CLIENT SETUP -----------------
 # 1. Configure the API Key
-# This relies on st.secrets["GEMINI_API_KEY"] being correctly set in Streamlit Cloud
 try:
+    # This configures the entire library for subsequent calls
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception as e:
-    # A failure here means the API key is not configured or the library is too old
     st.error("Configuration Error: Ensure your GEMINI_API_KEY is set in st.secrets.")
     st.stop()
 
-# 2. Instantiate the Client
+# 2. Instantiate the Client using the simple, modern syntax
 try:
-    # Use the correctly imported Client class
-    client = Client() 
+    # Use genai.Client() which is the intended way to instantiate the client object
+    client = genai.Client() 
 except Exception as e:
-    # This catches the 'module has no attribute Client' error, but should now pass
-    st.error(f"Failed to initialize Gemini Client. Check your imports/installation. Details: {e}")
+    # This catches initialization errors, which should be rare with the correct import
+    st.error(f"Failed to initialize Gemini Client. Details: {e}")
     st.stop()
+
 
 # ----------------- CUSTOM CSS: Futuristic/Cyberpunk Aesthetic -----------------
 st.markdown("""
@@ -145,7 +146,7 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # Use client.models.generate_content for the API call
+                # Call the API using the initialized client object
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
@@ -176,7 +177,7 @@ if st.button("✨ Generate Headlines"):
 
             except Exception as e:
                 # Catch API-specific errors, like invalid API key or content moderation block
-                st.error(f"❌ Gemini API Error: The generation failed. This might be due to an invalid API key, rate limits, or content restrictions. Details: {e}")
+                st.error(f"❌ Gemini API Error: The generation failed. Details: {e}")
     else:
         st.warning("⚠️ Please enter some keywords into the input field above.")
 
