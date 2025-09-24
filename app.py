@@ -1,5 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
+# ⚠️ THE FIX: Import Client directly from the client submodule 
+from google.generativeai.client import Client 
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -8,16 +10,17 @@ st.set_page_config(
     layout="centered",
 )
 
-# ----------------- GEMINI CLIENT SETUP (THE FIX IS HERE) -----------------
+# ----------------- GEMINI CLIENT SETUP -----------------
 # 1. Configure the API Key
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# 2. Instantiate the Client
-# This is the crucial step to expose the client methods like .models or .chats
+# 2. Instantiate the Client using the correctly imported class
 try:
-    client = genai.Client()
+    # Use the imported Client class
+    client = Client() 
 except Exception as e:
-    st.error(f"Failed to initialize Gemini Client: {e}")
+    st.error(f"Failed to initialize Gemini Client. Check your API key and environment setup. Details: {e}")
+    # Stop the app execution if the client can't be initialized
     st.stop()
 
 
@@ -136,7 +139,7 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # ----------------- THE CORRECTED CALL -----------------
+                # Use client.models.generate_content for the generation call
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
@@ -144,7 +147,6 @@ if st.button("✨ Generate Headlines"):
                         f"Topic to generate headlines for: {keywords}"
                     ]
                 )
-                # ----------------- END OF CORRECTED CALL -----------------
                 
                 # Extract and display the generated headlines
                 text = response.text
