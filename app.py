@@ -8,37 +8,19 @@ st.set_page_config(
     layout="centered",
 )
 
-# ----------------- GEMINI CLIENT SETUP (The Compatibility Fix) -----------------
+# ----------------- GEMINI CLIENT SETUP (Functional Access) -----------------
 
-# 1. Access the API Key directly from secrets
-API_KEY = None
+# 1. Configure the API Key
 try:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-except Exception:
+    # Use genai.configure() and rely on the environment variable/secrets manager
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    
+except Exception as e:
     st.error("Configuration Error: Ensure your GEMINI_API_KEY is set in st.secrets.")
     st.stop()
 
-# 2. Instantiate the client using the API key argument (old-style, highly compatible)
-try:
-    # We bypass genai.configure() and genai.Client() for maximum compatibility
-    # and directly initialize the client/model access via genai.models.client 
-    # and setting the API key in the call itself (if needed, though configure should work)
-    # The models service is always available if the package is installed.
-    # Note: On a very old SDK, 'client' might not exist, so we use the functional access.
-    
-    # This is the most stable method for older SDKs
-    client_stub = genai.models # Placeholder object to access generate_content
-    
-    # We rely on genai.configure having worked (if it didn't raise an error)
-    # and access the generate_content method directly on the 'models' object.
-
-except Exception as e:
-    # This block should now be bypassed, but kept for robustness
-    st.error(f"Failed to set up Gemini access. Details: {e}")
-    st.stop()
-    
-# We will use the models object directly in the generation step below
-# as the simplest way to get the generation call through.
+# ⚠️ The problematic client initialization block is completely removed here.
+# We will use the functional call genai.generate_content() directly.
 
 
 # ----------------- CUSTOM CSS: Futuristic/Cyberpunk Aesthetic -----------------
@@ -157,8 +139,8 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # ⚠️ THE CALL THAT WORKS ON VIRTUALLY ALL SDK VERSIONS ⚠️
-                # Since we configured the key, we use the functional access to the models service
+                # 💥 FINAL FUNCTIONAL CALL 💥
+                # This uses the generate_content function exposed directly by the main module.
                 response = genai.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
