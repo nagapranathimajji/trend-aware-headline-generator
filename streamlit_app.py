@@ -63,7 +63,7 @@ user_prompt = st.text_area(
 HF_API_TOKEN = st.secrets["HF_API_TOKEN"]  # store in Streamlit secrets
 generator = pipeline(
     "text-generation",
-    model="PeftModelForCausalLM",  # you can choose any suitable model
+    model="tiiuae/falcon-7b",  # you can choose any suitable model
     use_auth_token=HF_API_TOKEN,
 )
 
