@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+# ⚠️ New Import Strategy: Import Client directly from its canonical location.
+from google.generativeai.client import Client 
 
 # ----------------- PAGE CONFIG -----------------
 st.set_page_config(
@@ -8,92 +9,90 @@ st.set_page_config(
     layout="centered",
 )
 
-# ----------------- GEMINI CLIENT SETUP (Functional Access) -----------------
-
-# 1. Configure the API Key
+# ----------------- GEMINI CLIENT SETUP -----------------
+# 1. Access the API Key directly from secrets
+API_KEY = None
 try:
-    # Use genai.configure() and rely on the environment variable/secrets manager
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-except Exception as e:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except Exception:
     st.error("Configuration Error: Ensure your GEMINI_API_KEY is set in st.secrets.")
     st.stop()
 
-# ⚠️ The problematic client initialization block is completely removed here.
-# We will use the functional call genai.generate_content() directly.
-
-
+# 2. Instantiate the Client using the explicitly imported Client class
+try:
+    # We pass the API_KEY directly into the client constructor for maximum robustness
+    client = Client(api_key=API_KEY) 
+except Exception as e:
+    # This should be the final block to catch any remaining initialization errors
+    st.error(f"Failed to initialize Gemini Client. Details: {e}")
+    st.stop()
+    
 # ----------------- CUSTOM CSS: Futuristic/Cyberpunk Aesthetic -----------------
 st.markdown("""
 <style>
+/* ... (Your CSS is here and is correct) ... */
 /* 1. Global: Dark Mode Base, Futuristic Font */
 html, body, [data-testid="stAppViewContainer"] {
-    background-color: #0d0c1d; /* Deep Purple-Black Background */
+    background-color: #0d0c1d;
     color: #E0E0E0;
-    font-family: 'Space Mono', monospace; /* Futuristic/Monospace Font */
+    font-family: 'Space Mono', monospace;
 }
-
 /* 2. Headers: Neon Accents & Bold Typography */
 h1, h2 {
-    color: #00FFFF; /* Electric Cyan Accent */
-    text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; /* Subtle Neon Glow */
+    color: #00FFFF;
+    text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
     font-weight: 800;
 }
-/* Adjust Streamlit's internal subheader color */
 .st-emotion-cache-1wivap2 {
-    color: #FF00FF !important; /* Neon Magenta Subheader */
+    color: #FF00FF !important;
 }
-
 /* 3. Input Field (The Generator) */
 [data-testid="textInputRoot"] {
-    border: 2px solid #330055; /* Purple Border */
+    border: 2px solid #330055;
     background-color: #1a1930; 
     border-radius: 12px;
     padding: 10px;
     transition: all 0.3s ease-in-out;
 }
 [data-testid="textInputRoot"]:focus-within {
-    border-color: #00FFFF; /* Cyan on focus */
-    box-shadow: 0 0 15px #00FFFF40; /* Subtle hover glow */
+    border-color: #00FFFF;
+    box-shadow: 0 0 15px #00FFFF40;
 }
-
 /* 4. Generate Button: Motion UI/Liquid Feel */
 .stButton>button {
-    background-color: #FF00FF; /* Neon Magenta Button */
-    color: #0d0c1d; /* Dark text for contrast */
+    background-color: #FF00FF;
+    color: #0d0c1d;
     font-weight: bold;
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Liquid transition */
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     box-shadow: 0 4px 15px #FF00FF60;
 }
 .stButton>button:hover {
-    background-color: #00FFFF; /* Swap to Cyan on hover */
+    background-color: #00FFFF;
     color: #0d0c1d;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px #00FFFF60;
 }
-
 /* 5. Result Box: The Headline Display (Bento/Modular Feel) */
 .result-box {
     background-color: #1a1930; 
     border: 1px solid #330055;
-    border-left: 5px solid #00FFFF; /* Highlight bar */
+    border-left: 5px solid #00FFFF;
     border-radius: 12px;
     padding: 15px;
     margin-top: 15px;
     margin-bottom: 5px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    animation: fadeIn 0.5s ease-out; /* Seamless entry animation */
+    animation: fadeIn 0.5s ease-out;
 }
 .result-box h2 {
-    color: #E0E0E0; /* White text for readability */
+    color: #E0E0E0;
     font-size: 1.2em;
     text-shadow: none;
     margin: 0;
 }
-
 /* 6. Copy Button (Micro-Interaction) */
 .copy-btn {
     background: none;
@@ -139,9 +138,8 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # 💥 FINAL FUNCTIONAL CALL 💥
-                # This uses the generate_content function exposed directly by the main module.
-                response = genai.generate_content(
+                # 💥 FINAL CALL: Using the instantiated client object 💥
+                response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
                         PROMPT, 
@@ -154,7 +152,6 @@ if st.button("✨ Generate Headlines"):
                 headlines = [hl.strip("*- ").strip() for hl in text.split("\n") if hl.strip()]
 
                 for hl in headlines:
-                    # Escape quotes for JavaScript function in the copy button
                     safe_hl = hl.replace('"', '\\"') 
                     
                     st.markdown(f"""
@@ -166,7 +163,6 @@ if st.button("✨ Generate Headlines"):
                         </div>
                     """, unsafe_allow_html=True)
                 
-                # Simple separator for style
                 st.markdown("---")
 
             except Exception as e:
