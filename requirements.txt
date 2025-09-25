@@ -1,3 +1,2 @@
 streamlit
-# Use the stable major version to ensure compatibility
-google-genai==1.0.0
+google-generativeai==0.8.3
