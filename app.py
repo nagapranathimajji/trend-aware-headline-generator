@@ -121,7 +121,7 @@ if st.button("✨ Generate Headlines"):
     if keywords:
         with st.spinner("Scanning social trends... ⚡"):
             try:
-                # Let Gemini handle both system context + user input
+                # Send system + user context to Gemini
                 response = model.generate_content([
                     {"role": "system", "parts": [
                         "You are an expert Digital Marketer and Trend Analyst. "
