@@ -62,13 +62,13 @@ user_prompt = st.text_area(
 # ----------------- LOAD MODEL -----------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    model_id = "mistralai/Mistral-3B-Instruct-v0.1"  # correct model ID
-    generator = pipeline(
-        "text-generation",
-        model=model_id,
-        tokenizer=model_id,
-        use_auth_token=st.secrets["HUGGINGFACE"]["token"]  # HF token from secrets
-    )
+    #model_id = "mistralai/Mistral-3B-Instruct-v0.1"  # correct model ID
+
+generator = pipeline(
+    "text-generation",
+    model="NousResearch/Nous-Hermes-3B",
+    use_auth_token=st.secrets["HUGGINGFACE"]["token"]
+)
     return generator
 
 generator = load_model()
