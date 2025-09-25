@@ -72,23 +72,29 @@ generator = load_gpt2()
 if st.button("🚀 Generate Headlines"):
     if user_prompt.strip():
         try:
-            outputs = generator(
-                f"Generate 3 catchy headlines for this news article:\n{user_prompt}\nHeadlines:",
-                max_length=60,
-                num_return_sequences=3,
-                do_sample=True,
-                top_k=50,
-                top_p=0.95,
-                truncation=True
-            )
+            prompt_text = f"Generate a catchy headline for this news article:\n{user_prompt}\nHeadline:"
+
+            headlines = []
+            # Generate 3 unique headlines
+            for _ in range(3):
+                o = generator(
+                    prompt_text,
+                    max_new_tokens=30,  # short headline
+                    do_sample=True,
+                    top_k=50,
+                    top_p=0.95
+                )[0]
+
+                # Remove the prompt from generated text
+                headline = o['generated_text'].replace(prompt_text, "").strip()
+                headlines.append(headline)
 
             st.subheader("✨ Generated Headlines")
-            for o in outputs:
-                headline = o['generated_text'].strip().split("\n")[0]  # take first line
+            for h in headlines:
                 st.markdown(f"""
                     <div class="headline-card">
-                        <div class="headline-text">{headline}</div>
-                        <button class="copy-btn" onclick="navigator.clipboard.writeText('{headline}')">📋 Copy</button>
+                        <div class="headline-text">{h}</div>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText('{h}')">📋 Copy</button>
                     </div>
                 """, unsafe_allow_html=True)
 
