@@ -1,5 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
+import os
 
 # ----------------- CONFIG -----------------
 st.set_page_config(
@@ -9,6 +10,7 @@ st.set_page_config(
 )
 
 # Load API Key
+API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyBepNlvAnBZZlHU731Z-C5-HscLPdEm-N8")
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Initialize Model
