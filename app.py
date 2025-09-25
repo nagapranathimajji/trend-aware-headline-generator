@@ -1,6 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
-import os
+from transformers import pipeline
+from huggingface_hub import HfApi
 
 # ----------------- CONFIG -----------------
 st.set_page_config(
@@ -8,13 +8,6 @@ st.set_page_config(
     page_icon="✨",
     layout="centered",
 )
-
-# Load API Key
-#API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyBepNlvAnBZZlHU731Z-C5-HscLPdEm-N8")
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-# Initialize Model
-model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ----------------- CUSTOM CSS -----------------
 st.markdown("""
@@ -58,7 +51,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Gemini AI ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by Hugging Face ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -66,34 +59,38 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
+# Hugging Face API setup
+HF_API_TOKEN = st.secrets["HF_API_TOKEN"]  # store in Streamlit secrets
+generator = pipeline(
+    "text-generation",
+    model="google/flan-t5-large",  # you can choose any suitable model
+    use_auth_token=HF_API_TOKEN,
+)
+
 if st.button("🚀 Generate Headlines"):
     if user_prompt.strip():
         try:
-            # Call Gemini API
-            response = model.generate_content(
-                f"Generate 3 catchy, trend-aware headlines for this news article:\n\n{user_prompt}"
+            # Generate text
+            outputs = generator(
+                f"Generate 3 catchy headlines for this news article:\n{user_prompt}",
+                max_length=100,
+                num_return_sequences=3
             )
 
-            # Process response text into multiple lines
-            headlines = [h.strip("-• ").strip()
-                         for h in response.text.split("\n") if h.strip()]
-
             st.subheader("✨ Generated Headlines")
-
-            # Display each headline inside styled cards
-            for i, h in enumerate(headlines, start=1):
-                with st.container():
-                    st.markdown(
-                        f"""
-                        <div class="headline-card">
-                            <div class="headline-text">{h}</div>
-                            <button class="copy-btn" onclick="navigator.clipboard.writeText('{h}')">📋 Copy</button>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+            for i, o in enumerate(outputs, start=1):
+                headline = o['generated_text'].strip()
+                st.markdown(
+                    f"""
+                    <div class="headline-card">
+                        <div class="headline-text">{headline}</div>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText('{headline}')">📋 Copy</button>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         except Exception as e:
-            st.error(f"⚠️ Gemini API Error: {str(e)}")
+            st.error(f"⚠️ Hugging Face API Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
