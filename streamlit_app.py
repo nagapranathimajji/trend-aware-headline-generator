@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # ----------------- CONFIG -----------------
 st.set_page_config(
@@ -50,7 +50,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Flan-T5 ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by Mistral-7B-Instruct ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -58,12 +58,13 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
-# ----------------- LOAD FLAN-T5 -----------------
+# ----------------- LOAD MISTRAL-7B-INSTRUCT -----------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
-    model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-    generator = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+    model_id = "mistralai/Mistral-7B-Instruct-v0.3"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id)
+    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
     return generator
 
 generator = load_model()
@@ -77,19 +78,11 @@ if st.button("🚀 Generate Headlines"):
             # Generate 3 independent headlines with modified prompts for diversity
             for i in range(3):
                 prompt_text = (
-                    f"Write a short, catchy, and unique headline for the following news article. "
-                    f"Make sure this headline is different from any other headlines generated:\n\n{user_prompt}\nHeadline {i+1}:"
+                    f"[INST] Write a short, catchy, and unique headline for the following news article. "
+                    f"Ensure this headline is distinct from others: {user_prompt} [/INST]"
                 )
                 
-                output = generator(
-                    prompt_text,
-                    do_sample=True,
-                    top_k=50,
-                    top_p=0.95,
-                    num_return_sequences=1
-                )[0]
-
-                # Clean and store the headline
+                output = generator(prompt_text, max_length=60, num_return_sequences=1)[0]
                 headline = output['generated_text'].strip()
                 headlines.append(headline)
 
@@ -108,6 +101,6 @@ if st.button("🚀 Generate Headlines"):
                 st.button("📋 Copy", key=f"{i}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
-            st.error(f"⚠️ Flan-T5 Error: {str(e)}")
+            st.error(f"⚠️ Mistral-7B-Instruct Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
