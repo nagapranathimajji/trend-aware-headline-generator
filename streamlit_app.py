@@ -1,6 +1,5 @@
 import streamlit as st
-from transformers import pipeline
-from huggingface_hub import HfApi
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
 
 # ----------------- CONFIG -----------------
 st.set_page_config(
@@ -51,7 +50,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Hugging Face ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by GPT-2 ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -59,38 +58,40 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
-# Hugging Face API setup
-HF_API_TOKEN = st.secrets["HF_API_TOKEN"]  # store in Streamlit secrets
-generator = pipeline(
-    "text-generation",
-    model="gpt2",  # you can choose any suitable model
-    use_auth_token=HF_API_TOKEN,
-)
+# ----------------- LOAD GPT-2 -----------------
+@st.cache_resource(show_spinner=True)
+def load_gpt2():
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    model = GPT2LMHeadModel.from_pretrained("gpt2")
+    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+    return generator
 
+generator = load_gpt2()
+
+# ----------------- GENERATE HEADLINES -----------------
 if st.button("🚀 Generate Headlines"):
     if user_prompt.strip():
         try:
-            # Generate text
             outputs = generator(
-                f"Generate 3 catchy headlines for this news article:\n{user_prompt}",
-                max_length=100,
-                num_return_sequences=3
+                f"Generate 3 catchy headlines for this news article:\n{user_prompt}\nHeadlines:",
+                max_length=60,
+                num_return_sequences=3,
+                do_sample=True,
+                top_k=50,
+                top_p=0.95
             )
 
             st.subheader("✨ Generated Headlines")
-            for i, o in enumerate(outputs, start=1):
-                headline = o['generated_text'].strip()
-                st.markdown(
-                    f"""
+            for o in outputs:
+                headline = o['generated_text'].strip().split("\n")[0]  # take first line
+                st.markdown(f"""
                     <div class="headline-card">
                         <div class="headline-text">{headline}</div>
                         <button class="copy-btn" onclick="navigator.clipboard.writeText('{headline}')">📋 Copy</button>
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                """, unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"⚠️ Hugging Face API Error: {str(e)}")
+            st.error(f"⚠️ GPT-2 Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
