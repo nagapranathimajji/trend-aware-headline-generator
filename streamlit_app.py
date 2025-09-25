@@ -50,7 +50,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Mistral-7B-Instruct ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by Mistral-3B-Instruct ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -58,10 +58,10 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
-# ----------------- LOAD MISTRAL-7B-INSTRUCT -----------------
+# ----------------- LOAD MISTRAL-3B-INSTRUCT -----------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    model_id = "mistralai/Mistral-7B-Instruct-v0.3"
+    model_id = "mistralai/Mistral-3B-Instruct-v0.1"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id)
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
@@ -75,20 +75,27 @@ if st.button("🚀 Generate Headlines"):
         try:
             headlines = []
 
-            # Generate 3 independent headlines with modified prompts for diversity
+            # Generate 3 independent headlines with prompt tweaks for diversity
             for i in range(3):
                 prompt_text = (
                     f"[INST] Write a short, catchy, and unique headline for the following news article. "
                     f"Ensure this headline is distinct from others: {user_prompt} [/INST]"
                 )
                 
-                output = generator(prompt_text, max_length=60, num_return_sequences=1)[0]
+                output = generator(
+                    prompt_text,
+                    max_new_tokens=60,
+                    do_sample=True,
+                    top_k=50,
+                    top_p=0.95,
+                    num_return_sequences=1
+                )[0]
+
                 headline = output['generated_text'].strip()
                 headlines.append(headline)
 
             st.subheader("✨ Generated Headlines")
-            for i, h in enumerate(headlines):
-                # Display headline card
+            for idx, h in enumerate(headlines):
                 st.markdown(
                     f"""
                     <div class="headline-card">
@@ -98,9 +105,9 @@ if st.button("🚀 Generate Headlines"):
                     unsafe_allow_html=True
                 )
                 # Copy button with unique key
-                st.button("📋 Copy", key=f"{i}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
+                st.button("📋 Copy", key=f"{idx}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
-            st.error(f"⚠️ Mistral-7B-Instruct Error: {str(e)}")
+            st.error(f"⚠️ Mistral-3B-Instruct Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
