@@ -1,158 +1,97 @@
 import streamlit as st
 import google.generativeai as genai
 
-# ----------------- PAGE CONFIG -----------------
+# ----------------- CONFIG -----------------
 st.set_page_config(
     page_title="📰 Trend-Aware Headline Generator",
     page_icon="✨",
     layout="centered",
 )
 
-# ----------------- GEMINI CLIENT SETUP -----------------
-API_KEY = None
-try:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-except Exception:
-    st.error("Configuration Error: Ensure your GEMINI_API_KEY is set in st.secrets.")
-    st.stop()
+# Load API Key
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-try:
-    genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel("gemini-2.5-flash")
-except Exception as e:
-    st.error(f"Failed to initialize Gemini Client. Details: {e}")
-    st.stop()
+# Initialize Model
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ----------------- CUSTOM CSS -----------------
 st.markdown("""
 <style>
-/* Dark cyberpunk theme */
-html, body, [data-testid="stAppViewContainer"] {
-    background-color: #0d0c1d;
-    color: #E0E0E0;
-    font-family: 'Space Mono', monospace;
-}
-/* Neon headers */
-h1, h2 {
-    color: #00FFFF;
-    text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
-    font-weight: 800;
-}
-/* Input field */
-[data-testid="textInputRoot"] {
-    border: 2px solid #330055;
-    background-color: #1a1930; 
-    border-radius: 12px;
-    padding: 10px;
-    transition: all 0.3s ease-in-out;
-}
-[data-testid="textInputRoot"]:focus-within {
-    border-color: #00FFFF;
-    box-shadow: 0 0 15px #00FFFF40;
-}
-/* Button */
-.stButton>button {
-    background-color: #FF00FF;
-    color: #0d0c1d;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 4px 15px #FF00FF60;
-}
-.stButton>button:hover {
-    background-color: #00FFFF;
-    color: #0d0c1d;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px #00FFFF60;
-}
-/* Result box */
-.result-box {
-    background-color: #1a1930; 
-    border: 1px solid #330055;
-    border-left: 5px solid #00FFFF;
-    border-radius: 12px;
-    padding: 15px;
-    margin-top: 15px;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    animation: fadeIn 0.5s ease-out;
-}
-.result-box h2 {
-    color: #E0E0E0;
-    font-size: 1.2em;
-    margin: 0;
-}
-/* Copy button */
-.copy-btn {
-    background: none;
-    border: 1px solid #FF00FF;
-    color: #FF00FF;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 5px;
-    float: right;
-    font-size: 0.8em;
-    transition: background-color 0.2s, color 0.2s;
-}
-.copy-btn:hover {
-    background-color: #FF00FF;
-    color: #0d0c1d;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    body {
+        background: #f5f7fa;
+        font-family: 'Inter', sans-serif;
+    }
+    .headline-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease;
+    }
+    .headline-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+    .headline-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1a202c;
+    }
+    .copy-btn {
+        font-size: 0.9rem;
+        background: #2563eb;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        border: none;
+    }
+    .copy-btn:hover {
+        background: #1d4ed8;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- HEADER -----------------
+# ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.subheader("Generate multiple catchy, SEO-friendly headlines with AI ⚡")
+st.write("Generate **catchy, trend-aware headlines** powered by Gemini AI ✨")
 
-# ----------------- INPUT -----------------
-keywords = st.text_input("🔍 Enter a topic, keywords, or trend:")
+# Input box
+user_prompt = st.text_area(
+    "Enter your news/article content:",
+    placeholder="Paste your news article here..."
+)
 
-# ----------------- GENERATE BUTTON -----------------
-if st.button("✨ Generate Headlines"):
-    if keywords:
-        with st.spinner("Scanning social trends... ⚡"):
-            try:
-                # Send system + user context to Gemini
-                response = model.generate_content([
-                    {"role": "system", "parts": [
-                        "You are an expert Digital Marketer and Trend Analyst. "
-                        "Generate 5 trendy, engaging, SEO-friendly headlines. "
-                        "Use power words, curiosity gaps, and number lists where appropriate. "
-                        "Each headline should be short, catchy, and formatted as a bullet point."
-                    ]},
-                    {"role": "user", "parts": [f"Topic: {keywords}"]}
-                ])
-                
-                text = response.text
-                headlines = [hl.strip("*- ").strip() for hl in text.split("\n") if hl.strip()]
+if st.button("🚀 Generate Headlines"):
+    if user_prompt.strip():
+        try:
+            # Call Gemini API
+            response = model.generate_content(
+                f"Generate 3 catchy, trend-aware headlines for this news article:\n\n{user_prompt}"
+            )
 
-                for hl in headlines:
-                    safe_hl = hl.replace('"', '\\"') 
-                    st.markdown(f"""
-                        <div class='result-box'>
-                            <h2>{hl}</h2>
-                            <button class='copy-btn' onclick='navigator.clipboard.writeText("{safe_hl}")'>
-                                📋 Copy Headline
-                            </button>
+            # Process response text into multiple lines
+            headlines = [h.strip("-• ").strip()
+                         for h in response.text.split("\n") if h.strip()]
+
+            st.subheader("✨ Generated Headlines")
+
+            # Display each headline inside styled cards
+            for i, h in enumerate(headlines, start=1):
+                with st.container():
+                    st.markdown(
+                        f"""
+                        <div class="headline-card">
+                            <div class="headline-text">{h}</div>
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('{h}')">📋 Copy</button>
                         </div>
-                    """, unsafe_allow_html=True)
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-                st.markdown("---")
-
-            except Exception as e:
-                st.error(f"❌ Gemini API Error: The generation failed. Details: {e}")
+        except Exception as e:
+            st.error(f"⚠️ Gemini API Error: {str(e)}")
     else:
-        st.warning("⚠️ Please enter some keywords into the input field above.")
-
-# ----------------- FOOTER -----------------
-st.markdown("---")
-st.markdown("This tool uses the **Gemini 2.5 Flash** model for rapid trend analysis and headline generation.")
+        st.warning("Please enter some text first!")
