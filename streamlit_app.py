@@ -1,5 +1,6 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from transformers import pipeline
+from functools import partial
 
 # ----------------- CONFIG -----------------
 st.set_page_config(
@@ -50,7 +51,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Ministral-3B-Instruct ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by Mistral-3B-Instruct ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -58,13 +59,16 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
-# ----------------- LOAD MINISTRAL-3B-INSTRUCT -----------------
+# ----------------- LOAD MODEL -----------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    model_id = "ministral/Ministral-3b-instruct"
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id)
-    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+    model_id = "mistralai/Mistral-3B-Instruct-v0.1"  # correct model ID
+    generator = pipeline(
+        "text-generation",
+        model=model_id,
+        tokenizer=model_id,
+        use_auth_token=st.secrets["HUGGINGFACE"]["token"]  # HF token from secrets
+    )
     return generator
 
 generator = load_model()
@@ -75,13 +79,13 @@ if st.button("🚀 Generate Headlines"):
         try:
             headlines = []
 
-            # Generate 3 independent headlines with slight prompt tweaks
+            # Generate 3 independent headlines
             for i in range(3):
                 prompt_text = (
                     f"[INST] Write a short, catchy, and unique headline for the following news article. "
                     f"Ensure this headline is distinct from others: {user_prompt} [/INST]"
                 )
-                
+
                 output = generator(
                     prompt_text,
                     max_new_tokens=60,
@@ -94,9 +98,9 @@ if st.button("🚀 Generate Headlines"):
                 headline = output['generated_text'].strip()
                 headlines.append(headline)
 
+            # Display generated headlines
             st.subheader("✨ Generated Headlines")
             for idx, h in enumerate(headlines):
-                # Display headline card
                 st.markdown(
                     f"""
                     <div class="headline-card">
@@ -105,10 +109,9 @@ if st.button("🚀 Generate Headlines"):
                     """,
                     unsafe_allow_html=True
                 )
-                # Copy button with unique key
-                st.button("📋 Copy", key=f"{idx}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
+                st.button("📋 Copy", key=f"{idx}_{h}", on_click=partial(st.experimental_set_clipboard, h))
 
         except Exception as e:
-            st.error(f"⚠️ Ministral-3B-Instruct Error: {str(e)}")
+            st.error(f"⚠️ Error generating headlines: {str(e)}")
     else:
         st.warning("Please enter some text first!")
