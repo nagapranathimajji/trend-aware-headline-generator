@@ -63,7 +63,7 @@ user_prompt = st.text_area(
 HF_API_TOKEN = st.secrets["HF_API_TOKEN"]  # store in Streamlit secrets
 generator = pipeline(
     "text-generation",
-    model="stabilityai/stablelm-tuned-alpha-7b",  # you can choose any suitable model
+    model="gpt2",  # you can choose any suitable model
     use_auth_token=HF_API_TOKEN,
 )
 
