@@ -73,9 +73,13 @@ if st.button("🚀 Generate Headlines"):
     if user_prompt.strip():
         try:
             headlines = []
-            # Generate 3 independent headlines
+
+            # Generate 3 independent headlines with modified prompts for diversity
             for i in range(3):
-                prompt_text = f"Write a short, catchy, and unique headline for the following news article. Do not repeat sentences from the article:\n{user_prompt}"
+                prompt_text = (
+                    f"Write a short, catchy, and unique headline for the following news article. "
+                    f"Make sure this headline is different from any other headlines generated:\n\n{user_prompt}\nHeadline {i+1}:"
+                )
                 
                 output = generator(
                     prompt_text,
@@ -85,11 +89,13 @@ if st.button("🚀 Generate Headlines"):
                     num_return_sequences=1
                 )[0]
 
+                # Clean and store the headline
                 headline = output['generated_text'].strip()
                 headlines.append(headline)
 
             st.subheader("✨ Generated Headlines")
-            for h in headlines:
+            for i, h in enumerate(headlines):
+                # Display headline card
                 st.markdown(
                     f"""
                     <div class="headline-card">
@@ -98,7 +104,8 @@ if st.button("🚀 Generate Headlines"):
                     """,
                     unsafe_allow_html=True
                 )
-                st.button("📋 Copy", key=h, on_click=lambda text=h: st.experimental_set_clipboard(text))
+                # Copy button with unique key
+                st.button("📋 Copy", key=f"{i}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
             st.error(f"⚠️ Flan-T5 Error: {str(e)}")
