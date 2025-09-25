@@ -79,13 +79,12 @@ if st.button("🚀 Generate Headlines"):
                 
                 output = generator(
                     prompt_text,
-                    do_sample=True,   # creativity
+                    do_sample=True,
                     top_k=50,
                     top_p=0.95,
                     num_return_sequences=1
                 )[0]
 
-                # Clean headline
                 headline = output['generated_text'].strip()
                 headlines.append(headline)
 
@@ -99,11 +98,9 @@ if st.button("🚀 Generate Headlines"):
                     """,
                     unsafe_allow_html=True
                 )
-                # Working copy button
                 st.button("📋 Copy", key=h, on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
             st.error(f"⚠️ Flan-T5 Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
-
