@@ -50,7 +50,7 @@ st.markdown("""
 
 # ----------------- APP -----------------
 st.title("📰 Trend-Aware Headline Generator")
-st.write("Generate **catchy, trend-aware headlines** powered by Mistral-3B-Instruct ✨")
+st.write("Generate **catchy, trend-aware headlines** powered by Ministral-3B-Instruct ✨")
 
 # Input box
 user_prompt = st.text_area(
@@ -58,10 +58,10 @@ user_prompt = st.text_area(
     placeholder="Paste your news article here..."
 )
 
-# ----------------- LOAD MISTRAL-3B-INSTRUCT -----------------
+# ----------------- LOAD MINISTRAL-3B-INSTRUCT -----------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    model_id = "mistralai/Mistral-3B-Instruct-v0.1"
+    model_id = "ministral/Ministral-3b-instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id)
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
@@ -75,7 +75,7 @@ if st.button("🚀 Generate Headlines"):
         try:
             headlines = []
 
-            # Generate 3 independent headlines with prompt tweaks for diversity
+            # Generate 3 independent headlines with slight prompt tweaks
             for i in range(3):
                 prompt_text = (
                     f"[INST] Write a short, catchy, and unique headline for the following news article. "
@@ -96,6 +96,7 @@ if st.button("🚀 Generate Headlines"):
 
             st.subheader("✨ Generated Headlines")
             for idx, h in enumerate(headlines):
+                # Display headline card
                 st.markdown(
                     f"""
                     <div class="headline-card">
@@ -108,6 +109,6 @@ if st.button("🚀 Generate Headlines"):
                 st.button("📋 Copy", key=f"{idx}_{h}", on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
-            st.error(f"⚠️ Mistral-3B-Instruct Error: {str(e)}")
+            st.error(f"⚠️ Ministral-3B-Instruct Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
