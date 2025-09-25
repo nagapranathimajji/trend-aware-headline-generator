@@ -72,27 +72,38 @@ generator = load_model()
 if st.button("🚀 Generate Headlines"):
     if user_prompt.strip():
         try:
-            prompt_text = f"Generate 3 catchy and accurate headlines for this news article:\n{user_prompt}"
+            headlines = []
+            # Generate 3 independent headlines
+            for i in range(3):
+                prompt_text = f"Write a short, catchy, and unique headline for the following news article. Do not repeat sentences from the article:\n{user_prompt}"
+                
+                output = generator(
+                    prompt_text,
+                    do_sample=True,   # creativity
+                    top_k=50,
+                    top_p=0.95,
+                    num_return_sequences=1
+                )[0]
 
-            outputs = generator(
-                prompt_text,
-                do_sample=True,   # allow creative variation
-                top_k=50,
-                top_p=0.95,
-                num_return_sequences=3
-            )
+                # Clean headline
+                headline = output['generated_text'].strip()
+                headlines.append(headline)
 
             st.subheader("✨ Generated Headlines")
-            for o in outputs:
-                headline = o['generated_text'].strip()
-                st.markdown(f"""
+            for h in headlines:
+                st.markdown(
+                    f"""
                     <div class="headline-card">
-                        <div class="headline-text">{headline}</div>
-                        <button class="copy-btn" onclick="navigator.clipboard.writeText('{headline}')">📋 Copy</button>
+                        <div class="headline-text">{h}</div>
                     </div>
-                """, unsafe_allow_html=True)
+                    """,
+                    unsafe_allow_html=True
+                )
+                # Working copy button
+                st.button("📋 Copy", key=h, on_click=lambda text=h: st.experimental_set_clipboard(text))
 
         except Exception as e:
             st.error(f"⚠️ Flan-T5 Error: {str(e)}")
     else:
         st.warning("Please enter some text first!")
+
