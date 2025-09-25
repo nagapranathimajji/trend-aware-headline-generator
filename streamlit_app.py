@@ -78,7 +78,8 @@ if st.button("🚀 Generate Headlines"):
                 num_return_sequences=3,
                 do_sample=True,
                 top_k=50,
-                top_p=0.95
+                top_p=0.95,
+                truncation=True
             )
 
             st.subheader("✨ Generated Headlines")
